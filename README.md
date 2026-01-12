@@ -2,6 +2,8 @@
 
 A Claude Code plugin that makes Claude aware of its tmux environment, enabling parallel agents, background services, and self-continuation across sessions.
 
+**[View Interactive Demos](https://buremba.github.io/claude-tmux/)**
+
 ## Installation
 
 ### Option 1: From Plugin Manager (Recommended)

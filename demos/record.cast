@@ -1,0 +1,10 @@
+{"version": 2, "width": 120, "height": 35, "timestamp": 1736650000, "title": "Record a Demo"}
+[0.0, "o", "$ claude\r\n"]
+[0.5, "o", "\u001b[1m>\u001b[0m /record -p \"Show how to spawn a parallel pane\" -o demo.cast\r\n\r\n"]
+[1.5, "o", "\u001b[90mStarting asciinema recording...\u001b[0m\r\n"]
+[2.0, "o", "\u001b[90mLaunching Claude with prompt...\u001b[0m\r\n"]
+[4.0, "o", "\r\n\u001b[33mRecording in progress...\u001b[0m\r\n"]
+[6.0, "o", "\r\n\u001b[32m✓ Recording saved to demo.cast\u001b[0m\r\n"]
+[7.0, "o", "\r\nYou can play it with: asciinema play demo.cast\r\n"]
+[7.5, "o", "Or upload with: asciinema upload demo.cast\r\n"]
+[8.0, "o", "$ "]

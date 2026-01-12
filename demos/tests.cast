@@ -1,0 +1,10 @@
+{"version": 2, "width": 120, "height": 35, "timestamp": 1736650000, "title": "Tests + Self-Continuation"}
+[0.0, "o", "$ claude\r\n"]
+[0.5, "o", "\u001b[1m>\u001b[0m Run the full test suite in background.\r\n"]
+[0.8, "o", "  When done, queue a message telling me if we should deploy.\r\n\r\n"]
+[1.5, "o", "\u001b[90mSpawning test runner in window 'tests'...\u001b[0m\r\n"]
+[2.5, "o", "\u001b[90mQueuing continuation message...\u001b[0m\r\n"]
+[3.5, "o", "\r\n\u001b[32m✓ Tests running in background window 'tests'\u001b[0m\r\n"]
+[4.0, "o", "\u001b[32m✓ Message queued for next session\u001b[0m\r\n"]
+[5.0, "o", "\r\nI'll remind you about the test results in your next Claude session.\r\n"]
+[5.5, "o", "$ "]

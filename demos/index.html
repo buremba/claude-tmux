@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>claude-tmux Demos</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/asciinema-player@3.6.3/dist/bundle/asciinema-player.css" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #f0f6fc;
+        }
+        .subtitle {
+            color: #8b949e;
+            margin-bottom: 2rem;
+        }
+        .subtitle a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+        .subtitle a:hover { text-decoration: underline; }
+        .demo {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .demo-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #30363d;
+        }
+        .demo-header h2 {
+            font-size: 1.25rem;
+            color: #f0f6fc;
+            margin-bottom: 0.25rem;
+        }
+        .demo-header p {
+            color: #8b949e;
+            font-size: 0.9rem;
+        }
+        .demo-player {
+            padding: 1rem;
+            background: #0d1117;
+        }
+        .install {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .install h3 {
+            color: #f0f6fc;
+            margin-bottom: 0.5rem;
+        }
+        code {
+            background: #0d1117;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.9rem;
+        }
+        pre {
+            background: #0d1117;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+        }
+        pre code {
+            padding: 0;
+            background: none;
+        }
+        footer {
+            text-align: center;
+            color: #8b949e;
+            padding: 2rem 0;
+            border-top: 1px solid #30363d;
+            margin-top: 2rem;
+        }
+        footer a { color: #58a6ff; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>claude-tmux</h1>
+        <p class="subtitle">
+            Claude Code plugin for tmux awareness, parallel agents, and self-continuation.
+            <a href="https://github.com/buremba/claude-tmux">View on GitHub</a>
+        </p>
+
+        <div class="install">
+            <h3>Install</h3>
+            <pre><code>/plugin</code></pre>
+            <p style="margin-top: 0.5rem; color: #8b949e;">Then search for <code>claude-tmux</code> in the Discover tab.</p>
+        </div>
+
+        <div class="demo">
+            <div class="demo-header">
+                <h2>Dev Server + Live Logs</h2>
+                <p>Start a dev server in background, show logs in a visible pane, wait for ready.</p>
+            </div>
+            <div class="demo-player">
+                <div id="demo-devserver"></div>
+            </div>
+        </div>
+
+        <div class="demo">
+            <div class="demo-header">
+                <h2>Parallel Bug Fixes</h2>
+                <p>Spawn multiple Claude agents to fix different bugs simultaneously.</p>
+            </div>
+            <div class="demo-player">
+                <div id="demo-parallel"></div>
+            </div>
+        </div>
+
+        <div class="demo">
+            <div class="demo-header">
+                <h2>Tests + Self-Continuation</h2>
+                <p>Run tests in background, queue a reminder for the next session.</p>
+            </div>
+            <div class="demo-player">
+                <div id="demo-tests"></div>
+            </div>
+        </div>
+
+        <div class="demo">
+            <div class="demo-header">
+                <h2>Record a Demo</h2>
+                <p>Use /record to capture Claude interactions as asciinema files.</p>
+            </div>
+            <div class="demo-player">
+                <div id="demo-record"></div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Made by <a href="https://github.com/buremba">buremba</a> for <a href="https://claude.ai">Claude Code</a></p>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/asciinema-player@3.6.3/dist/bundle/asciinema-player.min.js"></script>
+    <script>
+        const playerOptions = {
+            theme: 'monokai',
+            fit: 'width',
+            idleTimeLimit: 2,
+            speed: 1.5
+        };
+
+        // Load players - files will be in same directory
+        AsciinemaPlayer.create('devserver.cast', document.getElementById('demo-devserver'), playerOptions);
+        AsciinemaPlayer.create('parallel.cast', document.getElementById('demo-parallel'), playerOptions);
+        AsciinemaPlayer.create('tests.cast', document.getElementById('demo-tests'), playerOptions);
+        AsciinemaPlayer.create('record.cast', document.getElementById('demo-record'), playerOptions);
+    </script>
+</body>
+</html>
