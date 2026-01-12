@@ -28,7 +28,7 @@ Record asciinema demonstrations of Claude executing prompts:
 
 1. Clone or download this repository to a location of your choice:
    ```bash
-   git clone https://github.com/anthropics/claude-tmux ~/.claude/plugins/claude-tmux
+   git clone https://github.com/buremba/claude-tmux ~/.claude/plugins/claude-tmux
    ```
 
 2. The plugin loads automatically. On your next Claude session in tmux, you'll see `TMUX_ENVIRONMENT_DETECTED` in your context.
@@ -41,6 +41,19 @@ If you prefer to manage plugins manually:
 mkdir -p ~/.claude/plugins
 cp -r claude-tmux ~/.claude/plugins/
 ```
+
+## Demos
+
+See the plugin in action! Watch interactive demonstrations of each feature:
+
+🎬 **[View Interactive Demos →](DEMOS.html)**
+
+Or generate your own:
+- **Quick start:** `./record-demo.sh detect-session`
+- **Interactive menu:** `./generate-demos.sh`
+- **From Claude Code:** `/record -p "Your prompt here"`
+
+See [DEMO_GENERATION.md](DEMO_GENERATION.md) for detailed instructions.
 
 ## Quick Start
 
