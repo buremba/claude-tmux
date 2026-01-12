@@ -24,22 +24,24 @@ Record asciinema demonstrations of Claude executing prompts:
 
 ## Installation
 
-### For Claude Code Users
+### From Claude Plugin Marketplace
 
-1. Clone or download this repository to a location of your choice:
-   ```bash
-   git clone https://github.com/buremba/claude-tmux ~/.claude/plugins/claude-tmux
-   ```
+In Claude Code, install directly from the marketplace:
 
-2. The plugin loads automatically. On your next Claude session in tmux, you'll see `TMUX_ENVIRONMENT_DETECTED` in your context.
+```
+/plugins install buremba/claude-tmux
+```
 
-### Manual Installation
+Or search in the plugin marketplace for `claude-tmux` by `buremba`.
+
+The plugin loads automatically. On your next Claude session in tmux, you'll see `TMUX_ENVIRONMENT_DETECTED` in your context.
+
+### Manual Installation (Alternative)
 
 If you prefer to manage plugins manually:
 
 ```bash
-mkdir -p ~/.claude/plugins
-cp -r claude-tmux ~/.claude/plugins/
+git clone https://github.com/buremba/claude-tmux ~/.claude/plugins/claude-tmux
 ```
 
 ## Recording Demos
