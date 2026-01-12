@@ -44,16 +44,33 @@ cp -r claude-tmux ~/.claude/plugins/
 
 ## Demos
 
-See the plugin in action! Watch interactive demonstrations of each feature:
+See the plugin in action! 🎬 **[View Interactive Demos →](DEMOS.html)**
 
-🎬 **[View Interactive Demos →](DEMOS.html)**
+### Generate Your Own
 
-Or generate your own:
-- **Quick start:** `./record-demo.sh detect-session`
-- **Interactive menu:** `./generate-demos.sh`
-- **From Claude Code:** `/record -p "Your prompt here"`
+Record asciinema demos of each feature:
 
-See [DEMO_GENERATION.md](DEMO_GENERATION.md) for detailed instructions.
+**One demo:**
+```bash
+./record-demo.sh detect-session
+```
+
+**All 7 demos:**
+```bash
+./generate-demos.sh
+# Select "1) All demos"
+```
+
+**From Claude Code in tmux:**
+```
+/record -p "Use detect-session.sh to show current tmux context" \
+        -o ./skills/record/recordings/demo-detect-session.cast
+```
+
+Cast files save to `skills/record/recordings/` and can be:
+- Played: `asciinema play demo-detect-session.cast`
+- Uploaded: `asciinema upload demo-detect-session.cast`
+- Embedded: `<asciinema-player src="demo.cast"></asciinema-player>`
 
 ## Quick Start
 
