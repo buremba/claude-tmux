@@ -2,7 +2,7 @@
 # Simple script to record individual demos
 # Usage: ./record-demo.sh <demo-name>
 
-set -euo pipefail
+set -eo pipefail
 
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RECORD_SCRIPT="$PLUGIN_DIR/skills/record/skill.sh"
@@ -10,24 +10,47 @@ RECORDINGS_DIR="$PLUGIN_DIR/skills/record/recordings"
 
 mkdir -p "$RECORDINGS_DIR"
 
-# Demo definitions: name => prompt
-declare -A DEMOS=(
-    ["detect-session"]="Use the detect-session.sh script to check if we're in tmux and get session info"
-    ["spawn-pane"]="Spawn a visible split pane using spawn-pane.sh with a command like 'echo Hello from parallel pane'"
-    ["spawn-window"]="Create a background window using spawn-window.sh named 'demo-server' with 'python3 -m http.server 8765'"
-    ["wait-for-text"]="Start a simple server in background and use wait-for-text.sh to wait for the 'Serving HTTP' message"
-    ["capture-output"]="Use capture-output.sh to capture the last 20 lines from a pane and display them"
-    ["queue-message"]="Use queue-message.sh to queue a message like 'Remember to check the tests'"
-    ["combined-workflow"]="Demonstrate a complete workflow: background window with server, visible pane with logs, wait for ready"
-)
+# Get prompt for demo name
+get_prompt() {
+    case "$1" in
+        detect-session)
+            echo "Use the detect-session.sh script to check if we're in tmux and get session info"
+            ;;
+        spawn-pane)
+            echo "Spawn a visible split pane using spawn-pane.sh with a command like 'echo Hello from parallel pane'"
+            ;;
+        spawn-window)
+            echo "Create a background window using spawn-window.sh named 'demo-server' with 'python3 -m http.server 8765'"
+            ;;
+        wait-for-text)
+            echo "Start a simple server in background and use wait-for-text.sh to wait for the 'Serving HTTP' message"
+            ;;
+        capture-output)
+            echo "Use capture-output.sh to capture the last 20 lines from a pane and display them"
+            ;;
+        queue-message)
+            echo "Use queue-message.sh to queue a message like 'Remember to check the tests'"
+            ;;
+        combined-workflow)
+            echo "Demonstrate a complete workflow: background window with server, visible pane with logs, wait for ready"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
 
 usage() {
     echo "Usage: $0 <demo-name>"
     echo ""
     echo "Available demos:"
-    for name in "${!DEMOS[@]}"; do
-        echo "  - $name"
-    done | sort
+    echo "  - detect-session"
+    echo "  - spawn-pane"
+    echo "  - spawn-window"
+    echo "  - wait-for-text"
+    echo "  - capture-output"
+    echo "  - queue-message"
+    echo "  - combined-workflow"
     echo ""
     echo "Example: $0 detect-session"
 }
@@ -39,14 +62,12 @@ fi
 
 DEMO_NAME="$1"
 
-if [ -z "${DEMOS[$DEMO_NAME]:-}" ]; then
+PROMPT=$(get_prompt "$DEMO_NAME" 2>/dev/null) || {
     echo "Error: Unknown demo '$DEMO_NAME'"
     echo ""
     usage
     exit 1
-fi
-
-PROMPT="${DEMOS[$DEMO_NAME]}"
+}
 OUTPUT_FILE="$RECORDINGS_DIR/demo-${DEMO_NAME}.cast"
 
 echo "Recording demo: $DEMO_NAME"
