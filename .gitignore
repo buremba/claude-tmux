@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist/
+build/
+*.o
+*.a
+*.so
+*.dylib
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Recordings (large files, regenerate as needed)
+skills/record/recordings/*.cast
+
+# Tmux messages (generated at runtime)
+skills/tmux-awareness/messages/
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# OS specific
+.DS_Store
+*.sublime-workspace
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
