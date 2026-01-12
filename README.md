@@ -42,35 +42,33 @@ mkdir -p ~/.claude/plugins
 cp -r claude-tmux ~/.claude/plugins/
 ```
 
-## Demos
+## Recording Demos
 
-See the plugin in action! 🎬 **[View Interactive Demos →](DEMOS.html)**
-
-### Generate Your Own
-
-Record asciinema demos of each feature:
-
-**One demo:**
-```bash
-./record-demo.sh detect-session
-```
-
-**All 7 demos:**
-```bash
-./generate-demos.sh
-# Select "1) All demos"
-```
+Record asciinema demonstrations of Claude using the plugin:
 
 **From Claude Code in tmux:**
 ```
-/record -p "Use detect-session.sh to show current tmux context" \
-        -o ./skills/record/recordings/demo-detect-session.cast
+/record -p "Your prompt here" -o output.cast
 ```
 
-Cast files save to `skills/record/recordings/` and can be:
-- Played: `asciinema play demo-detect-session.cast`
-- Uploaded: `asciinema upload demo-detect-session.cast`
-- Embedded: `<asciinema-player src="demo.cast"></asciinema-player>`
+**Example:**
+```
+/record -p "Demonstrate spawning a parallel pane with spawn-pane.sh" -o demo.cast
+```
+
+Cast files save to `~/.claude/plugins/claude-tmux/skills/record/recordings/` and can be:
+- **Played locally:** `asciinema play demo.cast`
+- **Uploaded to asciinema.org:** `asciinema upload demo.cast`
+- **Embedded in HTML:** `<asciinema-player src="demo.cast"></asciinema-player>`
+
+**Recording options:**
+```
+/record -p "PROMPT" [OPTIONS]
+  -w, --width WIDTH          Terminal width (default: 120)
+  -h, --height HEIGHT        Terminal height (default: 35)
+  -o, --output FILE.cast     Output file path
+  -t, --timeout SECONDS      Response timeout (default: 120)
+```
 
 ## Quick Start
 
