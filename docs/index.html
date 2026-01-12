@@ -32,30 +32,57 @@
             text-decoration: none;
         }
         .subtitle a:hover { text-decoration: underline; }
-        .demo {
+
+        /* Accordion styles */
+        .accordion {
             background: #161b22;
             border: 1px solid #30363d;
             border-radius: 6px;
-            margin-bottom: 2rem;
+            margin-bottom: 0.5rem;
             overflow: hidden;
         }
-        .demo-header {
+        .accordion-header {
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid #30363d;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
         }
-        .demo-header h2 {
-            font-size: 1.25rem;
+        .accordion-header:hover {
+            background: #1c2128;
+        }
+        .accordion-header h2 {
+            font-size: 1.1rem;
             color: #f0f6fc;
-            margin-bottom: 0.25rem;
+            margin: 0;
         }
-        .demo-header p {
+        .accordion-header p {
             color: #8b949e;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
         }
-        .demo-player {
-            padding: 1rem;
+        .accordion-icon {
+            color: #8b949e;
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+        .accordion.open .accordion-icon {
+            transform: rotate(180deg);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
             background: #0d1117;
         }
+        .accordion.open .accordion-content {
+            max-height: 600px;
+        }
+        .accordion-player {
+            padding: 1rem;
+        }
+
         .install {
             background: #161b22;
             border: 1px solid #30363d;
@@ -84,6 +111,11 @@
         pre code {
             padding: 0;
             background: none;
+        }
+        .demos-title {
+            color: #f0f6fc;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
         }
         footer {
             text-align: center;
@@ -118,43 +150,57 @@
             <pre><code>git clone https://github.com/buremba/claude-tmux ~/.claude/plugins/claude-tmux</code></pre>
         </div>
 
-        <div class="demo">
-            <div class="demo-header">
-                <h2>Dev Server + Live Logs</h2>
-                <p>Start a dev server in background, show logs in a visible pane, wait for ready.</p>
+        <h3 class="demos-title">Demos</h3>
+
+        <div class="accordion" data-cast="devserver.cast">
+            <div class="accordion-header" onclick="toggleAccordion(this.parentElement)">
+                <div>
+                    <h2>Dev Server + Live Logs</h2>
+                    <p>Start a dev server in background, show logs in a visible pane, wait for ready.</p>
+                </div>
+                <span class="accordion-icon">▼</span>
             </div>
-            <div class="demo-player">
-                <div id="demo-devserver"></div>
+            <div class="accordion-content">
+                <div class="accordion-player"></div>
             </div>
         </div>
 
-        <div class="demo">
-            <div class="demo-header">
-                <h2>Parallel Bug Fixes</h2>
-                <p>Spawn multiple Claude agents to fix different bugs simultaneously.</p>
+        <div class="accordion" data-cast="parallel.cast">
+            <div class="accordion-header" onclick="toggleAccordion(this.parentElement)">
+                <div>
+                    <h2>Parallel Agents</h2>
+                    <p>Spawn multiple Claude agents in background windows simultaneously.</p>
+                </div>
+                <span class="accordion-icon">▼</span>
             </div>
-            <div class="demo-player">
-                <div id="demo-parallel"></div>
-            </div>
-        </div>
-
-        <div class="demo">
-            <div class="demo-header">
-                <h2>Tests + Self-Continuation</h2>
-                <p>Run tests in background, queue a reminder for the next session.</p>
-            </div>
-            <div class="demo-player">
-                <div id="demo-tests"></div>
+            <div class="accordion-content">
+                <div class="accordion-player"></div>
             </div>
         </div>
 
-        <div class="demo">
-            <div class="demo-header">
-                <h2>Record a Demo</h2>
-                <p>Use /record to capture Claude interactions as asciinema files.</p>
+        <div class="accordion" data-cast="tests.cast">
+            <div class="accordion-header" onclick="toggleAccordion(this.parentElement)">
+                <div>
+                    <h2>Tests + Self-Continuation</h2>
+                    <p>Run tests in background, queue a reminder for the next session.</p>
+                </div>
+                <span class="accordion-icon">▼</span>
             </div>
-            <div class="demo-player">
-                <div id="demo-record"></div>
+            <div class="accordion-content">
+                <div class="accordion-player"></div>
+            </div>
+        </div>
+
+        <div class="accordion" data-cast="record.cast">
+            <div class="accordion-header" onclick="toggleAccordion(this.parentElement)">
+                <div>
+                    <h2>Record a Demo</h2>
+                    <p>Use /record to capture Claude interactions as asciinema files.</p>
+                </div>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-player"></div>
             </div>
         </div>
 
@@ -172,11 +218,31 @@
             speed: 1.5
         };
 
-        // Load players - files will be in same directory
-        AsciinemaPlayer.create('devserver.cast', document.getElementById('demo-devserver'), playerOptions);
-        AsciinemaPlayer.create('parallel.cast', document.getElementById('demo-parallel'), playerOptions);
-        AsciinemaPlayer.create('tests.cast', document.getElementById('demo-tests'), playerOptions);
-        AsciinemaPlayer.create('record.cast', document.getElementById('demo-record'), playerOptions);
+        const loadedPlayers = new Set();
+
+        function toggleAccordion(accordion) {
+            const wasOpen = accordion.classList.contains('open');
+
+            // Close all accordions
+            document.querySelectorAll('.accordion').forEach(a => {
+                a.classList.remove('open');
+            });
+
+            // Open clicked one if it wasn't open
+            if (!wasOpen) {
+                accordion.classList.add('open');
+                loadPlayer(accordion);
+            }
+        }
+
+        function loadPlayer(accordion) {
+            const castFile = accordion.dataset.cast;
+            if (loadedPlayers.has(castFile)) return;
+
+            const playerDiv = accordion.querySelector('.accordion-player');
+            AsciinemaPlayer.create(castFile, playerDiv, playerOptions);
+            loadedPlayers.add(castFile);
+        }
     </script>
 </body>
 </html>
