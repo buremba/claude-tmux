@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Makes Claude aware of its tmux environment for parallel agents, background services, and self-continuation",
   "author": {
-    "name": "burakemre"
+    "name": "burakemre",
+    "url": "https://github.com/buremba"
   },
   "license": "MIT",
   "keywords": ["tmux", "parallel", "agents", "background", "continuation"]
