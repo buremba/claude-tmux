@@ -180,14 +180,14 @@ run_recording() {
 
   log_info "=== Starting Recording Workflow ==="
 
-  # REQUIRE being inside tmux
+  # REQUIRE being inside tmux - we need to know the current session
   if [ -z "${TMUX:-}" ]; then
     log_error "Must run inside a tmux session"
     log_error "Start tmux first: tmux new -s mysession"
     return 1
   fi
 
-  # Get current session
+  # Get current session info
   local session
   session=$(get_current_session) || {
     log_error "Failed to get current tmux session"
@@ -195,64 +195,99 @@ run_recording() {
   }
   log_info "Recording in session: $session"
 
-  # Create unique window name for recording
+  # Create a unique window name for this recording
   local window_name="claude-record-$$"
-  local target
 
-  # Step 1: Create window in CURRENT session
-  log_info "Step 1/4: Creating recording window in current session"
-  target=$(create_window_in_session "$session" "$window_name") || {
-    log_error "Failed to create recording window"
+  # Create a new tmux window for the recording
+  log_info "Creating recording window: $window_name"
+  tmux new-window -t "$session" -n "$window_name" -d
+
+  # Get the full target for this window
+  local target="$session:$window_name"
+
+  # Resize the window to the specified dimensions
+  # This is important when running from a non-interactive terminal
+  tmux resize-window -t "$target" -x "$width" -y "$height" 2>/dev/null || true
+
+  # Save the prompt to a temp file for the sender script
+  local prompt_file="/tmp/claude-prompt-$$.txt"
+  printf '%s' "$prompt" > "$prompt_file"
+
+  # Create a script that will send keys to the recording window
+  # This runs in the background while asciinema records
+  local sender_script="/tmp/claude-sender-$$.sh"
+  cat > "$sender_script" << 'SENDER'
+#!/bin/bash
+target="$1"
+prompt_file="$2"
+timeout="$3"
+
+# Wait for Claude to start and be ready
+sleep 3
+
+# Send the prompt (escape special tmux characters)
+prompt=$(cat "$prompt_file")
+tmux send-keys -t "$target" -l "$prompt"
+tmux send-keys -t "$target" Enter
+
+# Wait for Claude to process (poll until we see output settling)
+waited=0
+while [ $waited -lt $timeout ]; do
+  sleep 5
+  waited=$((waited + 5))
+
+  # Check if Claude finished (look for prompt ">" at start of line)
+  output=$(tmux capture-pane -t "$target" -p 2>/dev/null | tail -20)
+  if echo "$output" | grep -q "^>" 2>/dev/null; then
+    # Give it a moment to fully complete
+    sleep 3
+    break
+  fi
+done
+
+# Send /exit to quit Claude
+tmux send-keys -t "$target" "/exit" Enter
+sleep 2
+
+# Exit the window
+tmux send-keys -t "$target" "exit" Enter
+SENDER
+  chmod +x "$sender_script"
+
+  # Start Claude in the recording window
+  tmux send-keys -t "$target" "claude --dangerously-skip-permissions" Enter
+
+  # Start the sender script in background (it will type the prompt after Claude is ready)
+  "$sender_script" "$target" "$prompt_file" "$timeout" &
+  local sender_pid=$!
+
+  log_info "Recording with asciinema (attaching to tmux to capture splits)"
+  log_info "Max recording time: ${timeout}s"
+
+  # Run asciinema with a hard timeout to prevent huge files
+  # This captures the FULL tmux UI including any split panes Claude creates
+  # We unset TMUX to allow attaching from within a tmux session
+  TMUX= timeout "${timeout}s" asciinema rec \
+    --idle-time-limit "$idle_time" \
+    --cols "$width" \
+    --rows "$height" \
+    --overwrite \
+    "$output" \
+    -c "tmux attach -t '$target'" || true
+
+  # Kill sender if still running
+  kill $sender_pid 2>/dev/null || true
+
+  local exit_code=$?
+
+  # Cleanup - kill the recording window if it still exists
+  tmux kill-window -t "$target" 2>/dev/null || true
+  rm -f "$sender_script" "$prompt_file"
+
+  if [ $exit_code -ne 0 ]; then
+    log_error "Recording failed with exit code: $exit_code"
     return 1
-  }
-
-  # Step 2: Start Claude in the new window
-  log_info "Step 2/4: Starting Claude"
-  if ! start_claude_in_session "$target" "--dangerously-skip-permissions"; then
-    log_error "Failed to start Claude"
-    cleanup_window "$target"
-    return 1
   fi
-
-  # Step 3: Start recording the window
-  log_info "Step 3/4: Starting asciinema recording"
-  local asciinema_pid
-  asciinema_pid=$(start_recording "$target" "$output" "$width" "$height" "$idle_time")
-  if [ -z "$asciinema_pid" ]; then
-    log_error "Failed to start recording"
-    cleanup_window "$target"
-    return 1
-  fi
-
-  # Step 4: Send prompt and wait
-  log_info "Step 4/4: Sending prompt and waiting for response"
-
-  # Send the prompt
-  send_claude_prompt "$target" "$prompt" "$timeout" 1 5 || {
-    log_warn "Prompt may have timed out, but continuing with exit"
-  }
-
-  # Wait for response to be visible before exiting
-  sleep 3
-
-  # Exit cleanly - only cleanup the recording window, not the whole session
-  log_info "Executing exit sequence"
-  if verify_target "$target" 2>/dev/null; then
-    exit_claude "$target" || true
-    sleep 2
-    exit_shell "$target" || true
-  fi
-
-  # Stop recording
-  if [ -n "$asciinema_pid" ]; then
-    stop_recording "$asciinema_pid" 10 || true
-  fi
-
-  # Cleanup only the recording window
-  cleanup_window "$target" || true
-
-  # Wait for recording to fully write
-  sleep 2
 
   # Verify output file
   if [ ! -f "$output" ]; then

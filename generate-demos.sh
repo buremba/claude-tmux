@@ -12,8 +12,20 @@ RECORD_SCRIPT="$SCRIPT_DIR/skills/record/scripts/record.sh"
 check_prereqs() {
     if [ -z "${TMUX:-}" ]; then
         echo "Error: Must run inside tmux session"
-        echo "Start tmux first: tmux new -s demos"
+        echo "Start tmux first: tmux new -s demos -x 100 -y 30"
         exit 1
+    fi
+
+    # Ensure minimum window size for recordings
+    local current_width current_height
+    current_width=$(tmux display -p '#{window_width}')
+    current_height=$(tmux display -p '#{window_height}')
+
+    if [ "$current_width" -lt 100 ] || [ "$current_height" -lt 30 ]; then
+        echo "Warning: Current window size (${current_width}x${current_height}) is smaller than recording size (100x30)"
+        echo "Recordings may have incorrect dimensions. Resize your terminal or run:"
+        echo "  tmux resize-window -x 100 -y 30"
+        read -p "Press Enter to continue anyway, or Ctrl+C to abort..."
     fi
 
     if ! command -v claude &>/dev/null; then
