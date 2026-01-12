@@ -10,6 +10,34 @@ version: 1.0.0
 
 You don't need to tell Claude which tmux script to use - Claude understands it's in tmux and will automatically make the right choice.
 
+## CRITICAL: Current Session vs Background Windows
+
+**When to use the CURRENT session (split-window):**
+- User asks to "show", "display", "run side by side", or wants to SEE something
+- Visual tools like htop, lazygit, logs, monitoring
+- Any request that implies the user wants to watch the output
+- Default behavior for panes/splits
+
+**When to use a NEW background window (spawn-window.sh):**
+- User explicitly says "in the background", "background window", "don't need to see"
+- Long-running servers, test suites, builds
+- Tasks where user wants to continue working without watching
+
+**NEVER use `tmux new-session`** - always work within the current session. Use `split-window` for visible panes or `new-window` for background work.
+
+```bash
+# CORRECT - split current window for visible work
+tmux split-window -h
+tmux send-keys "htop" Enter
+
+# CORRECT - new window for background work
+tmux new-window -d -n "server"
+tmux send-keys -t server "npm start" Enter
+
+# WRONG - never create new sessions!
+tmux new-session -d -s newsession  # DO NOT DO THIS
+```
+
 ## Automatic Detection
 
 On every session start, the plugin runs `detect-tmux-context.sh` which:
@@ -132,26 +160,6 @@ Claude will spawn the build in a background window and queue a reminder for the 
 
 All scripts are in `{baseDir}/scripts/` and return JSON for easy parsing.
 
-## CRITICAL: Always Use the Current Session
-
-**NEVER create new tmux sessions** when asked to split panes or run commands. Always operate within the CURRENT session that Claude is running in.
-
-**DO:**
-```bash
-# Split the current window into panes
-tmux split-window -h  # horizontal split
-tmux split-window -v  # vertical split
-tmux send-keys -t {pane} "command" Enter
-```
-
-**DON'T:**
-```bash
-# NEVER create a new session - this is wrong!
-tmux new-session -d -s newsession  # WRONG!
-```
-
-When the user asks for split panes, htop, lazygit, or similar visual layouts - create the splits in the CURRENT session where Claude is running, so the user can see them immediately.
-
 ## Tips for Best Results
 
 1. **Be descriptive** - Tell Claude clearly what you want (visible vs background, how long to wait, etc)
@@ -160,4 +168,3 @@ When the user asks for split panes, htop, lazygit, or similar visual layouts - c
 4. **Queue important work** - Ask Claude to queue messages if you need reminders in the next session
 5. **Check logs** - Ask Claude to "show me the logs" or "what's happening in the background" anytime
 6. **Set timeouts** - Tell Claude "wait up to 5 minutes" if tasks are slow
-7. **Use current session** - When asking for visual layouts, Claude will modify the CURRENT session, not create a new one
