@@ -180,31 +180,47 @@ run_recording() {
 
   log_info "=== Starting Recording Workflow ==="
 
-  # Create unique session
-  local session="claude-record-$(date +%s)-$$"
-
-  # Step 1: Create tmux session
-  log_info "Step 1/4: Creating tmux session"
-  create_session "$session" "$width" "$height" || {
-    log_error "Failed to create tmux session"
-    return 1
-  }
-
-  # Step 2: Start Claude
-  log_info "Step 2/4: Starting Claude"
-  if ! start_claude_in_session "$session" "--dangerously-skip-permissions"; then
-    log_error "Failed to start Claude"
-    cleanup_session "$session"
+  # REQUIRE being inside tmux
+  if [ -z "${TMUX:-}" ]; then
+    log_error "Must run inside a tmux session"
+    log_error "Start tmux first: tmux new -s mysession"
     return 1
   fi
 
-  # Step 3: Start recording from outside
+  # Get current session
+  local session
+  session=$(get_current_session) || {
+    log_error "Failed to get current tmux session"
+    return 1
+  }
+  log_info "Recording in session: $session"
+
+  # Create unique window name for recording
+  local window_name="claude-record-$$"
+  local target
+
+  # Step 1: Create window in CURRENT session
+  log_info "Step 1/4: Creating recording window in current session"
+  target=$(create_window_in_session "$session" "$window_name") || {
+    log_error "Failed to create recording window"
+    return 1
+  }
+
+  # Step 2: Start Claude in the new window
+  log_info "Step 2/4: Starting Claude"
+  if ! start_claude_in_session "$target" "--dangerously-skip-permissions"; then
+    log_error "Failed to start Claude"
+    cleanup_window "$target"
+    return 1
+  fi
+
+  # Step 3: Start recording the window
   log_info "Step 3/4: Starting asciinema recording"
   local asciinema_pid
-  asciinema_pid=$(start_recording "$session" "$output" "$width" "$height" "$idle_time")
+  asciinema_pid=$(start_recording "$target" "$output" "$width" "$height" "$idle_time")
   if [ -z "$asciinema_pid" ]; then
     log_error "Failed to start recording"
-    cleanup_session "$session"
+    cleanup_window "$target"
     return 1
   fi
 
@@ -212,20 +228,33 @@ run_recording() {
   log_info "Step 4/4: Sending prompt and waiting for response"
 
   # Add visual separator
-  add_separator "$session" "=================================================="
+  add_separator "$target" "=================================================="
   sleep 1
 
   # Send the prompt
-  send_claude_prompt "$session" "$prompt" "$timeout" 1 5 || {
+  send_claude_prompt "$target" "$prompt" "$timeout" 1 5 || {
     log_warn "Prompt may have timed out, but continuing with exit"
   }
 
   # Add closing separator and wait for it to be visible
-  add_separator "$session" "=================================================="
+  add_separator "$target" "=================================================="
   sleep 5
 
-  # Exit cleanly
-  exit_recording "$session" "$asciinema_pid"
+  # Exit cleanly - only cleanup the recording window, not the whole session
+  log_info "Executing exit sequence"
+  if verify_target "$target" 2>/dev/null; then
+    exit_claude "$target" || true
+    sleep 2
+    exit_shell "$target" || true
+  fi
+
+  # Stop recording
+  if [ -n "$asciinema_pid" ]; then
+    stop_recording "$asciinema_pid" 10 || true
+  fi
+
+  # Cleanup only the recording window
+  cleanup_window "$target" || true
 
   # Wait for recording to fully write
   sleep 2

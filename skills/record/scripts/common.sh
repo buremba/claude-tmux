@@ -211,7 +211,52 @@ confirm_prompt() {
 # Session Management
 # ============================================================================
 
-# Create isolated tmux session with specific dimensions
+# Get current tmux session name (requires being inside tmux)
+get_current_session() {
+  if [ -z "${TMUX:-}" ]; then
+    log_error "Not inside a tmux session"
+    return 1
+  fi
+  tmux display-message -p '#S'
+}
+
+# Create a new window in the current session for recording
+create_window_in_session() {
+  local session="$1"
+  local name="$2"
+  local width="${3:-120}"
+  local height="${4:-35}"
+
+  log_info "Creating window '$name' in session '$session'"
+
+  # Create detached window
+  tmux new-window -d -t "$session" -n "$name"
+
+  # Get the window target
+  local target="${session}:${name}"
+
+  sleep 0.5
+  log_success "Window created: $target"
+  echo "$target"
+}
+
+# Kill only the recording window (not the whole session)
+cleanup_window() {
+  local target="$1"
+
+  if [ -z "$target" ]; then
+    return 0
+  fi
+
+  log_info "Cleaning up window: $target"
+
+  # Kill just this window
+  tmux kill-window -t "$target" 2>/dev/null || true
+
+  log_success "Window cleaned up: $target"
+}
+
+# Legacy: Create isolated tmux session (kept for compatibility)
 create_session() {
   local session="$1"
   local width="${2:-120}"
@@ -224,15 +269,12 @@ create_session() {
   fi
 
   log_info "Creating tmux session: $session ($width x $height)"
-
-  # Create with exact dimensions
   tmux new-session -d -s "$session" -x "$width" -y "$height"
-
   sleep 1
   log_success "Session created: $session"
 }
 
-# Kill session and all its windows
+# Legacy: Kill session and all its windows (kept for compatibility)
 cleanup_session() {
   local session="$1"
 
@@ -241,15 +283,7 @@ cleanup_session() {
   fi
 
   log_info "Cleaning up session: $session"
-
-  # Kill all windows in session
-  tmux list-windows -t "$session" -F '#{window_id}' 2>/dev/null | while read wid; do
-    tmux kill-window -t "$wid" 2>/dev/null || true
-  done
-
-  # Kill session
   tmux kill-session -t "$session" 2>/dev/null || true
-
   log_success "Session cleaned up: $session"
 }
 
@@ -450,6 +484,7 @@ export -f log_info log_success log_warn log_error
 export -f verify_target capture_pane pane_contains send_keys add_separator
 export -f wait_for_text wait_for_prompt wait_for_claude_ready
 export -f send_prompt_and_wait send_prompt_no_wait confirm_prompt
+export -f get_current_session create_window_in_session cleanup_window
 export -f create_session cleanup_session list_windows list_panes
 export -f start_recording stop_recording
 export -f exit_claude exit_shell exit_recording
