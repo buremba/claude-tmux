@@ -7,242 +7,208 @@
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/asciinema-player@3.10.0/dist/bundle/asciinema-player.css" />
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #0d1117;
             color: #c9d1d9;
             line-height: 1.6;
         }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
+
+        /* Full-screen player */
+        #fullscreen-player {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
         }
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+        #fullscreen-player .ap-wrapper,
+        #fullscreen-player .ap-player {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Top-right overlay */
+        .overlay {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 10;
+            background: rgba(13, 17, 23, 0.92);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1.5rem;
+            max-width: 400px;
+            backdrop-filter: blur(8px);
+        }
+        .overlay h1 {
+            font-size: 1.5rem;
             color: #f0f6fc;
+            margin-bottom: 0.25rem;
         }
-        .subtitle {
+        .overlay .subtitle {
             color: #8b949e;
-            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
         }
-        .subtitle a {
+        .overlay .subtitle a {
             color: #58a6ff;
             text-decoration: none;
         }
-        .subtitle a:hover { text-decoration: underline; }
-
-        /* Accordion styles */
-        .accordion {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-            overflow: hidden;
-        }
-        .accordion-header {
-            padding: 1rem 1.5rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background 0.2s;
-        }
-        .accordion-header:hover {
-            background: #1c2128;
-        }
-        .accordion-header h2 {
-            font-size: 1.1rem;
+        .overlay .subtitle a:hover { text-decoration: underline; }
+        .overlay .install h3 {
             color: #f0f6fc;
-            margin: 0;
-        }
-        .accordion-header p {
-            color: #8b949e;
-            font-size: 0.85rem;
-            margin-top: 0.25rem;
-        }
-        .accordion-icon {
-            color: #8b949e;
-            font-size: 1.2rem;
-            transition: transform 0.3s;
-        }
-        .accordion.open .accordion-icon {
-            transform: rotate(180deg);
-        }
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            background: #0d1117;
-        }
-        .accordion.open .accordion-content {
-            max-height: 600px;
-        }
-        .accordion-player {
-            padding: 1rem;
-        }
-
-        .install {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .install h3 {
-            color: #f0f6fc;
+            font-size: 0.95rem;
             margin-bottom: 0.5rem;
         }
-        code {
-            background: #0d1117;
+        .overlay code {
+            background: #161b22;
             padding: 0.2rem 0.4rem;
             border-radius: 3px;
             font-family: 'SF Mono', Consolas, monospace;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
-        pre {
-            background: #0d1117;
-            padding: 1rem;
+        .overlay pre {
+            background: #161b22;
+            padding: 0.75rem;
             border-radius: 6px;
             overflow-x: auto;
             margin-top: 0.5rem;
         }
-        pre code {
+        .overlay pre code {
             padding: 0;
             background: none;
         }
-        .demos-title {
-            color: #f0f6fc;
-            font-size: 1.25rem;
-            margin-bottom: 1rem;
+
+        /* Fixed right-side demo nav */
+        .demo-nav {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
-        footer {
-            text-align: center;
+        .demo-nav button {
+            background: rgba(22, 27, 34, 0.9);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            color: #c9d1d9;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            backdrop-filter: blur(8px);
+        }
+        .demo-nav button:hover {
+            background: rgba(48, 54, 61, 0.9);
+            border-color: #58a6ff;
+        }
+        .demo-nav button.active {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+        .demo-nav .demo-title {
+            font-weight: 600;
+        }
+        .demo-nav .demo-desc {
+            font-size: 0.75rem;
             color: #8b949e;
-            padding: 2rem 0;
-            border-top: 1px solid #30363d;
-            margin-top: 2rem;
+            margin-top: 0.25rem;
         }
-        footer a { color: #58a6ff; text-decoration: none; }
-        footer a:hover { text-decoration: underline; }
+        .demo-nav button.active .demo-desc {
+            color: #58a6ff;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Full-screen asciinema player -->
+    <div id="fullscreen-player"></div>
+
+    <!-- Top-right install overlay -->
+    <div class="overlay">
         <h1>claude-tmux</h1>
         <p class="subtitle">
             Claude Code plugin for tmux awareness, parallel agents, and self-continuation.
-            <a href="https://github.com/buremba/claude-tmux">View on GitHub</a>
+            <a href="https://github.com/buremba/claude-tmux">GitHub</a>
         </p>
-
         <div class="install">
             <h3>Install</h3>
-            <p style="color: #8b949e; margin-bottom: 0.75rem;"><strong style="color: #f0f6fc;">Option 1:</strong> Plugin Manager</p>
-            <pre><code>/plugin</code></pre>
-            <p style="margin-top: 0.5rem; color: #8b949e;">Then search for <code>claude-tmux</code> in the Discover tab.</p>
-
-            <p style="color: #8b949e; margin: 1rem 0 0.75rem;"><strong style="color: #f0f6fc;">Option 2:</strong> Add as Marketplace</p>
             <pre><code>/plugin marketplace add https://github.com/buremba/claude-tmux
 /plugin install claude-tmux</code></pre>
-
-            <p style="color: #8b949e; margin: 1rem 0 0.75rem;"><strong style="color: #f0f6fc;">Option 3:</strong> Manual</p>
-            <pre><code>git clone https://github.com/buremba/claude-tmux ~/.claude/plugins/claude-tmux</code></pre>
         </div>
+    </div>
 
-        <h3 class="demos-title">Demos</h3>
-
-        <div class="accordion" data-cast="devserver.cast?v=6">
-            <div class="accordion-header" onclick="toggleAccordion(this.parentElement)">
-                <div>
-                    <h2>Dev Server + Live Logs</h2>
-                    <p>Start a dev server in background, show logs in a visible pane, wait for ready.</p>
-                </div>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-player"></div>
-            </div>
-        </div>
-
-        <div class="accordion" data-cast="parallel.cast?v=6">
-            <div class="accordion-header" onclick="toggleAccordion(this.parentElement)">
-                <div>
-                    <h2>Parallel Agents</h2>
-                    <p>Spawn multiple Claude agents in background windows simultaneously.</p>
-                </div>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-player"></div>
-            </div>
-        </div>
-
-        <div class="accordion" data-cast="tests.cast?v=6">
-            <div class="accordion-header" onclick="toggleAccordion(this.parentElement)">
-                <div>
-                    <h2>Tests + Self-Continuation</h2>
-                    <p>Run tests in background, queue a reminder for the next session.</p>
-                </div>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-player"></div>
-            </div>
-        </div>
-
-        <div class="accordion" data-cast="record.cast?v=6">
-            <div class="accordion-header" onclick="toggleAccordion(this.parentElement)">
-                <div>
-                    <h2>Record a Demo</h2>
-                    <p>Use /record to capture Claude interactions as asciinema files.</p>
-                </div>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-player"></div>
-            </div>
-        </div>
-
-        <footer>
-            <p>Made by <a href="https://github.com/buremba">buremba</a> for <a href="https://claude.ai">Claude Code</a></p>
-        </footer>
+    <!-- Fixed right-side demo buttons -->
+    <div class="demo-nav">
+        <button data-cast="devserver.cast?v=6" class="active">
+            <div class="demo-title">Dev Server</div>
+            <div class="demo-desc">Background server with live logs</div>
+        </button>
+        <button data-cast="parallel.cast?v=6">
+            <div class="demo-title">Parallel Agents</div>
+            <div class="demo-desc">Multiple Claude agents simultaneously</div>
+        </button>
+        <button data-cast="tests.cast?v=6">
+            <div class="demo-title">Tests</div>
+            <div class="demo-desc">Background tests with self-continuation</div>
+        </button>
+        <button data-cast="record.cast?v=6">
+            <div class="demo-title">Record</div>
+            <div class="demo-desc">Capture interactions as asciinema</div>
+        </button>
     </div>
 
     <script src="https://unpkg.com/asciinema-player@3.10.0/dist/bundle/asciinema-player.min.js"></script>
     <script>
         const playerOptions = {
             theme: 'monokai',
-            fit: 'width',
+            fit: 'both',
             idleTimeLimit: 2,
-            speed: 1.5
+            speed: 1.5,
+            autoPlay: true,
+            loop: true
         };
 
-        const loadedPlayers = new Set();
+        let currentPlayer = null;
+        const playerContainer = document.getElementById('fullscreen-player');
 
-        function toggleAccordion(accordion) {
-            const wasOpen = accordion.classList.contains('open');
-
-            // Close all accordions
-            document.querySelectorAll('.accordion').forEach(a => {
-                a.classList.remove('open');
-            });
-
-            // Open clicked one if it wasn't open
-            if (!wasOpen) {
-                accordion.classList.add('open');
-                loadPlayer(accordion);
+        function loadPlayer(castFile) {
+            // Destroy existing player
+            if (currentPlayer) {
+                currentPlayer.dispose();
+                // Clear container using DOM methods
+                while (playerContainer.firstChild) {
+                    playerContainer.removeChild(playerContainer.firstChild);
+                }
             }
+            // Create new player
+            currentPlayer = AsciinemaPlayer.create(castFile, playerContainer, playerOptions);
         }
 
-        function loadPlayer(accordion) {
-            const castFile = accordion.dataset.cast;
-            if (loadedPlayers.has(castFile)) return;
+        // Initialize with first demo
+        loadPlayer('devserver.cast?v=6');
 
-            const playerDiv = accordion.querySelector('.accordion-player');
-            AsciinemaPlayer.create(castFile, playerDiv, playerOptions);
-            loadedPlayers.add(castFile);
-        }
+        // Demo button click handlers
+        document.querySelectorAll('.demo-nav button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update active state
+                document.querySelectorAll('.demo-nav button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                // Load new demo
+                loadPlayer(btn.dataset.cast);
+            });
+        });
     </script>
 </body>
 </html>
