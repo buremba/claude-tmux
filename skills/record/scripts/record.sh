@@ -227,18 +227,13 @@ run_recording() {
   # Step 4: Send prompt and wait
   log_info "Step 4/4: Sending prompt and waiting for response"
 
-  # Add visual separator
-  add_separator "$target" "=================================================="
-  sleep 1
-
   # Send the prompt
   send_claude_prompt "$target" "$prompt" "$timeout" 1 5 || {
     log_warn "Prompt may have timed out, but continuing with exit"
   }
 
-  # Add closing separator and wait for it to be visible
-  add_separator "$target" "=================================================="
-  sleep 5
+  # Wait for response to be visible before exiting
+  sleep 3
 
   # Exit cleanly - only cleanup the recording window, not the whole session
   log_info "Executing exit sequence"
