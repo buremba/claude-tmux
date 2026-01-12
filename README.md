@@ -72,49 +72,66 @@ Cast files save to `~/.claude/plugins/claude-tmux/skills/record/recordings/` and
   -t, --timeout SECONDS      Response timeout (default: 120)
 ```
 
-## Quick Start
+## How It Works
 
-### Using Tmux Awareness
+When you're in Claude Code **inside a tmux session**, Claude automatically detects the environment and gains these capabilities:
 
-When Claude detects tmux, you can use these capabilities:
+### What Claude Can Do
 
-**Spawn a parallel Claude agent in a visible pane:**
-```bash
-~/.claude/plugins/claude-tmux/skills/tmux-awareness/scripts/spawn-pane.sh \
-  -d h -c "claude --print 'Review this PR and suggest improvements'"
+Simply ask Claude what you need, and it will automatically use tmux:
+
+**Parallel agents:**
+```
+Run Claude in a visible split pane to review this PR
+```
+Claude will spawn itself in a side-by-side pane.
+
+**Background servers:**
+```
+Start a dev server in the background and wait for it to be ready
+```
+Claude will create a separate window, start the server, and monitor it.
+
+**Long-running tasks:**
+```
+Run the tests in the background and queue a message when they're done
+```
+Claude will spawn the tests in a background window and queue a reminder for the next session.
+
+**Monitoring:**
+```
+Check the logs from the background server
+```
+Claude will capture and display output without switching windows.
+
+### The Tmux Awareness Context
+
+When Claude starts in tmux, it sees:
+```
+TMUX_ENVIRONMENT_DETECTED: You are running inside tmux!
+
+Session: my-session | Window: 0 | Pane: 0
+Current window has 1 pane(s), session has 2 window(s)
+
+**Tmux Capabilities Available:**
+- Create visible panes (split current window) for parallel work
+- Create background windows for servers, watchers, long-running processes
+- Spawn parallel Claude agents in separate panes/windows
+- Monitor output from any pane/window
+- Queue messages for self-continuation in next session
 ```
 
-**Create a background window for a dev server:**
-```bash
-~/.claude/plugins/claude-tmux/skills/tmux-awareness/scripts/spawn-window.sh \
-  -n "server" -c "npm run dev"
+Claude **will automatically use these capabilities** for background processes, parallel work, and server management.
+
+### Recording Demos
+
+Record how Claude uses the plugin:
+
+```
+/record -p "Demonstrate spawning a parallel pane to review a PR" -o review-demo.cast
 ```
 
-**Queue a message for the next session:**
-```bash
-~/.claude/plugins/claude-tmux/skills/tmux-awareness/scripts/queue-message.sh \
-  "Check if the server passed all tests before deploying"
-```
-
-**Check current session info:**
-```bash
-~/.claude/plugins/claude-tmux/skills/tmux-awareness/scripts/detect-session.sh
-```
-
-### Using Record Skill
-
-Record Claude executing a prompt:
-
-```bash
-/record -p "Demonstrate spawning a parallel pane with tmux"
-```
-
-With custom options:
-```bash
-/record -p "Show dev server setup" -w 120 -h 35 -o my-demo.cast
-```
-
-Record will save to `~/.claude/plugins/claude-tmux/skills/record/recordings/`
+Claude will execute the prompt and record the entire interaction as an asciinema file.
 
 ## Skills Overview
 
@@ -182,54 +199,48 @@ claude-tmux/
 
 ### Parallel Bug Fixes
 
-Spawn multiple Claude agents to fix different bugs simultaneously:
+Ask Claude to fix multiple bugs in parallel:
 
-```bash
-spawn-window.sh -n "bug-auth" -c "claude --print 'Fix authentication timeout'"
-spawn-window.sh -n "bug-api" -c "claude --print 'Fix 500 error in /api'"
-spawn-window.sh -n "bug-ui" -c "claude --print 'Fix button alignment'"
-
-# Monitor completion
-for win in bug-auth bug-api bug-ui; do
-  wait-for-text.sh -t "$win:0.0" -p '^\$' -T 600
-done
 ```
+Fix these 3 bugs in parallel using separate Claude agents:
+1. Authentication timeout in login.py
+2. 500 error in /api/users endpoint
+3. Button alignment in header component
+
+Run each in a separate background window and report when all are complete.
+```
+
+Claude will automatically spawn 3 agents in background windows and monitor their completion.
 
 ### Dev Server with Live Logs
 
-```bash
-# Start server in background
-spawn-window.sh -n "server" -c "npm run dev"
-
-# Show logs in visible pane
-spawn-pane.sh -d v -p 30 -c "tail -f logs/app.log"
-
-# Wait for ready
-wait-for-text.sh -t "server:0.0" -p "listening on" -T 30
 ```
+Start the dev server in the background and show the logs in a visible pane.
+Wait until it's ready and then let me know.
+```
+
+Claude will create a background window for the server, a visible pane for logs, monitor for readiness, and confirm when it's running.
 
 ### Self-Continuation
 
-```bash
-# Long-running task in background
-spawn-window.sh -n "build" -c "npm run build && npm test"
-
-# Queue reminder for next session
-queue-message.sh "Check build results in 'build' window. Deploy if successful."
 ```
+Run the full test suite in the background. When it's done, queue a message
+telling me if I should deploy to staging.
+```
+
+Claude will spawn tests in a background window, queue a message for the next session with the results.
 
 ### Documentation Workflow
 
-```bash
-# Start server
-spawn-window.sh -n "docs-server" -c "npm run docs:serve"
-
-# Record demo
-/record -p "Show the new dashboard component in the docs"
-
-# Share the recording
-asciinema upload ~/.claude/plugins/claude-tmux/skills/record/recordings/recording-*.cast
 ```
+Start the docs server in the background. Then create a recording showing
+the new dashboard component in action.
+```
+
+Claude will:
+1. Start the docs server in a background window
+2. Record an asciinema demo of the new component
+3. Save the .cast file for you to upload or share
 
 ## Requirements
 
@@ -256,46 +267,29 @@ sudo apt-get install tmux asciinema jq
 pip install asciinema
 ```
 
-## Common Patterns
+## Advanced Tmux Control
 
-### Waiting for Conditions
+For direct tmux control (if needed), Claude can use raw tmux commands:
 
-```bash
-# Wait for server to start (30s timeout)
-wait-for-text.sh -t "server:0.0" -p "ready on port" -T 30
+### Listing Sessions and Windows
 
-# Wait for process to complete (shell prompt)
-wait-for-text.sh -t "build:0.0" -p '^\$' -T 600
-
-# Wait for exact string (fixed match)
-wait-for-text.sh -t "process:0.0" -p "DONE" -F
+```
+List all my tmux windows and panes
 ```
 
-### Capturing Output
+### Managing Windows
 
-```bash
-# Get last 100 lines
-capture-output.sh -t "server:0.0" -l 100
-
-# Get JSON output with metadata
-capture-output.sh -t "agent:0.0" -l 50 --json
+```
+Kill the 'server' background window
 ```
 
-### Managing Sessions
+### Monitoring Output
 
-```bash
-# List all windows
-tmux list-windows -F '#{window_index}: #{window_name}'
-
-# List all panes
-tmux list-panes -a
-
-# Kill a window
-tmux kill-window -t "server"
-
-# Kill a pane
-tmux kill-pane -t "main:0.1"
 ```
+Show me the last 50 lines from the background server output
+```
+
+Claude will automatically use the tmux-awareness scripts to accomplish these tasks, but you can always ask for specific tmux operations if needed.
 
 ## Troubleshooting
 
@@ -308,15 +302,6 @@ tmux kill-pane -t "main:0.1"
 2. Check plugin is installed: `ls ~/.claude/plugins/claude-tmux`
 3. Verify plugin loads: `grep claude-tmux ~/.claude/settings.json`
 
-### Scripts not found
-
-**Problem:** "command not found" for detect-session.sh, spawn-pane.sh, etc.
-
-**Solution:**
-1. Check plugin path: `ls ~/.claude/plugins/claude-tmux/skills/*/scripts/`
-2. Make scripts executable: `chmod +x ~/.claude/plugins/claude-tmux/skills/*/scripts/*.sh`
-3. Use full path: `~/.claude/plugins/claude-tmux/skills/tmux-awareness/scripts/detect-session.sh`
-
 ### Recording fails
 
 **Problem:** `/record` command not found or recording doesn't save.
@@ -324,17 +309,28 @@ tmux kill-pane -t "main:0.1"
 **Solution:**
 1. Check asciinema is installed: `asciinema --version`
 2. Check jq is installed: `jq --version`
-3. Check recordings directory: `mkdir -p ~/.claude/plugins/claude-tmux/skills/record/recordings`
+3. Check recordings directory exists: `mkdir -p ~/.claude/plugins/claude-tmux/skills/record/recordings`
 4. Try custom output: `/record -p "test" -o /tmp/test.cast`
 
-### Parallel agents timeout
+### Claude doesn't use tmux features
 
-**Problem:** Claude agents in background windows don't respond.
+**Problem:** You ask Claude to run something in background, but it runs in foreground instead.
 
 **Solution:**
-1. Increase timeout: `wait-for-text.sh -t "window:0.0" -p '^\$' -T 300` (5 minutes)
-2. Check agent output: `capture-output.sh -t "window:0.0" -l 20`
-3. Verify claude CLI works: `claude --version`
+1. Be explicit: "Run this in a background tmux window"
+2. Describe what you want: "I need to see logs in a visible pane while the server runs"
+3. Check you're in tmux: `echo $TMUX`
+4. Verify plugin loaded: Check for `TMUX_ENVIRONMENT_DETECTED` in your session context
+
+### Claude agents timeout or hang
+
+**Problem:** Parallel Claude agents in background windows don't respond.
+
+**Solution:**
+1. Ask Claude to increase the timeout: "Give the agents 5 minutes to complete"
+2. Check the logs: "Show me what's happening in the background window"
+3. Verify Claude CLI works: `claude --version`
+4. Check network connection and Claude API availability
 
 ## Documentation
 

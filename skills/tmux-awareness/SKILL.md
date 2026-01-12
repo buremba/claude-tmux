@@ -1,12 +1,14 @@
 ---
 name: tmux-awareness
-description: This skill is AUTOMATICALLY ENABLED when Claude runs inside tmux. Use for "run parallel Claude agents", "spawn agent in pane", "start background server", "run dev server", "watch in background", "queue message for later", "self-continuation", "check tmux status", "split pane", "new window", or any parallel execution, background processes, or tmux operations. The SessionStart hook auto-detects tmux and injects capabilities.
+description: This skill is AUTOMATICALLY ENABLED when Claude runs inside tmux. Claude will automatically use tmux for background processes, parallel agents, and long-running tasks. Ask Claude to "run this in the background", "spawn a parallel agent", "start a dev server", "watch for completion", or any other parallel/background work. The SessionStart hook auto-detects tmux and injects capabilities.
 version: 1.0.0
 ---
 
 # Tmux Awareness Skill
 
-**AUTO-ENABLED:** When Claude runs inside tmux, the SessionStart hook automatically detects this and injects tmux context. Claude will see "TMUX_ENVIRONMENT_DETECTED" at session start with available capabilities.
+**AUTO-ENABLED:** When Claude runs inside tmux, the SessionStart hook automatically detects this and injects tmux context. Claude will see "TMUX_ENVIRONMENT_DETECTED" at session start and **will automatically use tmux capabilities for all background processes, parallel agents, and long-running tasks**.
+
+You don't need to tell Claude which tmux script to use - Claude understands it's in tmux and will automatically make the right choice.
 
 ## Automatic Detection
 
@@ -31,170 +33,91 @@ On every session start, the plugin runs `detect-tmux-context.sh` which:
   - File watchers
   - Long-running processes
 
-## Session Detection
+## How Claude Uses This Skill
 
-Get current tmux context:
+When you ask Claude to do background work, parallel tasks, or run servers, Claude automatically:
 
-```bash
-{baseDir}/scripts/detect-session.sh
+1. **Detects you're in tmux** - Sees `TMUX_ENVIRONMENT_DETECTED` in context
+2. **Makes smart decisions** - Chooses whether to use visible panes or background windows
+3. **Manages processes** - Spawns agents, monitors completion, captures output
+4. **Handles failures** - Retries on timeout, displays errors
+5. **Queues continuations** - Reminds you in the next session if needed
+
+You just ask Claude what you need, and it uses the appropriate tmux script automatically.
+
+## What Claude Can Do
+
+### Ask Claude to Create Visible Panes (Side-by-Side Work)
 ```
-
-Returns JSON:
-```json
-{
-  "in_tmux": true,
-  "session": "main",
-  "window": 0,
-  "pane": 0,
-  "target": "main:0.0"
-}
+Run Claude in a visible split pane to review this code while I continue working
 ```
+Claude will use `spawn-pane.sh` to split the current window.
 
-## Creating Visible Panes
-
-Split the current window to show parallel work:
-
-```bash
-# Horizontal split (side by side)
-{baseDir}/scripts/spawn-pane.sh -d h -c "claude --print 'Review the PR'"
-
-# Vertical split (stacked)
-{baseDir}/scripts/spawn-pane.sh -d v -c "npm run watch"
-
-# Custom size (30% of space)
-{baseDir}/scripts/spawn-pane.sh -d h -p 30 -c "tail -f logs/app.log"
+### Ask Claude to Create Background Windows (Servers, Long Tasks)
 ```
-
-Returns JSON with pane target for monitoring.
-
-## Creating Background Windows
-
-Create a separate window for background workers:
-
-```bash
-# Dev server (stays in current window)
-{baseDir}/scripts/spawn-window.sh -n "dev-server" -c "npm run dev"
-
-# Another Claude agent
-{baseDir}/scripts/spawn-window.sh -n "agent-fix-tests" -c "claude --print 'Fix failing tests'"
-
-# Switch to the new window
-{baseDir}/scripts/spawn-window.sh -n "monitor" -c "htop" --switch
+Start the dev server in a background window and let me know when it's ready
 ```
+Claude will use `spawn-window.sh` to create a separate window and `wait-for-text.sh` to detect readiness.
 
-Returns JSON with window target.
-
-## Monitoring Output
-
-### Capture Pane Contents
-
-```bash
-# Get last 100 lines from a target
-{baseDir}/scripts/capture-output.sh -t "dev-server:0.0" -l 100
-
-# JSON output with metadata
-{baseDir}/scripts/capture-output.sh -t "agent-1:0.0" -l 50 --json
+### Ask Claude to Monitor Output
 ```
-
-### Wait for Pattern
-
-```bash
-# Wait for server to be ready (30s timeout)
-{baseDir}/scripts/wait-for-text.sh -t "dev-server:0.0" -p "ready on port" -T 30
-
-# Wait for shell prompt (agent completed)
-{baseDir}/scripts/wait-for-text.sh -t "agent-1:0.0" -p '^\$' -T 300
-
-# Wait for fixed string
-{baseDir}/scripts/wait-for-text.sh -t "build:0.0" -p "Build successful" -F
+Show me the logs from the background server
 ```
+Claude will use `capture-output.sh` to get the output without switching windows.
 
-## Direct Tmux Commands
-
-For operations not covered by helper scripts, use tmux directly:
-
-### List Windows and Panes
-
-```bash
-# List all windows
-tmux list-windows -F '#{window_index}: #{window_name} (#{window_panes} panes)'
-
-# List all panes across windows
-tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index} #{pane_current_command}'
+### Ask Claude for Self-Continuation
 ```
-
-### Send Keys to Pane
-
-```bash
-# Send command to background pane
-tmux send-keys -t "dev-server:0.0" "npm run build" Enter
-
-# Send Ctrl-C to stop a process
-tmux send-keys -t "dev-server:0.0" C-c
+Run the tests in the background. When done, queue a message telling me if they passed.
 ```
+Claude will use `spawn-window.sh` for the tests and `queue-message.sh` to remind you in the next session.
 
-### Kill Window or Pane
+## Available Scripts (For Reference)
 
-```bash
-# Kill a window
-tmux kill-window -t "dev-server"
+Claude uses these scripts automatically:
+- `detect-session.sh` - Get tmux context
+- `spawn-pane.sh` - Create visible split pane
+- `spawn-window.sh` - Create background window
+- `wait-for-text.sh` - Wait for pattern in output
+- `capture-output.sh` - Get pane contents
+- `queue-message.sh` - Queue message for next session
 
-# Kill a pane
-tmux kill-pane -t "main:0.1"
-```
-
-## Self-Continuation
-
-Queue messages for the next Claude session:
-
-```bash
-# Queue a reminder
-{baseDir}/scripts/queue-message.sh "Check if the build passed and deploy to staging"
-
-# Queue from stdin
-echo "Review the PR comments from Alice" | {baseDir}/scripts/queue-message.sh -
-```
-
-Messages are stored in `~/.claude/tmux-messages/` and delivered when the next Claude session starts.
+You don't need to call these directly - just ask Claude what you need!
 
 ## Common Patterns
 
+Ask Claude using natural language:
+
 ### Parallel Bug Fixes
 
-```bash
-# Spawn 3 agents to fix different bugs
-{baseDir}/scripts/spawn-window.sh -n "bug-auth" -c "claude --print 'Fix auth timeout bug in login.py'"
-{baseDir}/scripts/spawn-window.sh -n "bug-api" -c "claude --print 'Fix 500 error in /api/users'"
-{baseDir}/scripts/spawn-window.sh -n "bug-ui" -c "claude --print 'Fix button alignment in header'"
-
-# Monitor completion
-for win in bug-auth bug-api bug-ui; do
-  {baseDir}/scripts/wait-for-text.sh -t "$win:0.0" -p '^\$' -T 600
-done
 ```
+Fix these 3 bugs in parallel:
+1. Auth timeout bug in login.py
+2. 500 error in /api/users endpoint
+3. Button alignment issue in header
+
+Spawn a separate Claude agent for each in background windows.
+Report when all are complete.
+```
+
+Claude will spawn 3 agents in background windows and monitor their completion.
 
 ### Dev Server with Live Logs
 
-```bash
-# Start server in background window
-{baseDir}/scripts/spawn-window.sh -n "server" -c "npm run dev"
-
-# Show logs in visible pane
-{baseDir}/scripts/spawn-pane.sh -d v -p 30 -c "tail -f logs/server.log"
-
-# Wait for server ready
-{baseDir}/scripts/wait-for-text.sh -t "server:0.0" -p "listening on" -T 30
+```
+Start the dev server in a background window and show me the logs in a visible pane.
+Wait until the server is ready on port 3000, then let me know.
 ```
 
-### Build and Notify Next Session
+Claude will create a background window for the server, a visible pane for logs, and monitor for readiness.
 
-```bash
-# Start build in background
-{baseDir}/scripts/spawn-window.sh -n "build" -c "npm run build && echo 'BUILD_DONE'"
+### Build and Notify
 
-# Queue message for follow-up
-{baseDir}/scripts/queue-message.sh "Check build results in 'build' window. If successful, deploy to staging."
 ```
+Run the full build and test suite in the background.
+When it's done, queue a message telling me if it passed and whether we should deploy to staging.
+```
+
+Claude will spawn the build in a background window and queue a reminder for the next session with the results.
 
 ## Script Reference
 
@@ -209,11 +132,11 @@ done
 
 All scripts are in `{baseDir}/scripts/` and return JSON for easy parsing.
 
-## Tips
+## Tips for Best Results
 
-1. **Use `--print` mode** for Claude agents when non-interactive execution is needed
-2. **Name windows descriptively** - makes monitoring easier
-3. **Check session first** - always verify in_tmux before using features
-4. **Use panes for visibility** - things user should see during work
-5. **Use windows for background** - servers, watchers stay out of way
-6. **Queue important follow-ups** - self-continuation ensures nothing is forgotten
+1. **Be descriptive** - Tell Claude clearly what you want (visible vs background, how long to wait, etc)
+2. **Use natural language** - No need to know which script to use; Claude figures it out
+3. **Describe outcomes** - "Wait for the server to be ready" is better than "spawn server"
+4. **Queue important work** - Ask Claude to queue messages if you need reminders in the next session
+5. **Check logs** - Ask Claude to "show me the logs" or "what's happening in the background" anytime
+6. **Set timeouts** - Tell Claude "wait up to 5 minutes" if tasks are slow

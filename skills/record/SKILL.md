@@ -1,18 +1,25 @@
 ---
 name: record
-description: "Record asciinema demonstrations of Claude executing a prompt in tmux. Use this when the user asks to: record a demo, create a recording, capture Claude session, generate demo video, or record an example."
+description: "Record asciinema demonstrations of Claude executing a prompt in tmux. Use /record to create a recording of Claude working on any task."
 triggers:
   - "record"
   - "recording"
   - "asciinema"
   - "demo"
-  - "capture session"
+  - "capture"
 version: 1.0.0
 ---
 
-# Record Skill - Claude Tmux Recording
+# Record Skill
 
-Record Claude executing any prompt in a tmux session and save it as an asciinema `.cast` file.
+Record Claude executing any task in a tmux session and save it as an asciinema `.cast` file.
+
+Users simply use:
+```
+/record -p "What you want Claude to do" -o output.cast
+```
+
+The skill will record the entire interaction and save it as a playable asciinema recording.
 
 ## Overview
 
