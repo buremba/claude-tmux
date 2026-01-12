@@ -4,11 +4,23 @@ A Claude Code plugin that makes Claude aware of its tmux environment, enabling p
 
 ## Installation
 
+### Option 1: From Plugin Manager (Recommended)
+
 ```
-/plugins install buremba/claude-tmux
+/plugin
 ```
 
-Or clone manually:
+Then navigate to **Discover** tab and search for `claude-tmux` by `buremba`.
+
+### Option 2: Add GitHub as Marketplace
+
+```
+/plugin marketplace add https://github.com/buremba/claude-tmux
+/plugin install claude-tmux
+```
+
+### Option 3: Manual Install
+
 ```bash
 git clone https://github.com/buremba/claude-tmux ~/.claude/plugins/claude-tmux
 ```
