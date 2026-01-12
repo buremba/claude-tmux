@@ -269,8 +269,7 @@ SENDER
   # We unset TMUX to allow attaching from within a tmux session
   TMUX= timeout "${timeout}s" asciinema rec \
     --idle-time-limit "$idle_time" \
-    --cols "$width" \
-    --rows "$height" \
+    --window-size "${width}x${height}" \
     --overwrite \
     "$output" \
     -c "tmux attach -t '$target'" || true

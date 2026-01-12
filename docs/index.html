@@ -151,7 +151,7 @@
 
     <!-- Fixed right-side demo buttons -->
     <div class="demo-nav">
-        <button data-cast="tools-demo.cast?v=1" class="active">
+        <button data-cast="tools-demo.cast?v=2" class="active">
             <div class="demo-title">Split Panes</div>
             <div class="demo-desc">htop + lazygit in 3-pane layout</div>
         </button>
@@ -176,7 +176,7 @@
     <script src="https://unpkg.com/asciinema-player@3.10.0/dist/bundle/asciinema-player.min.js"></script>
     <script>
         const playerOptions = {
-            theme: 'monokai',
+            theme: 'dracula',
             fit: 'both',
             idleTimeLimit: 2,
             speed: 1.5,
@@ -201,7 +201,7 @@
         }
 
         // Initialize with first demo
-        loadPlayer('tools-demo.cast?v=1');
+        loadPlayer('tools-demo.cast?v=2');
 
         // Demo button click handlers
         document.querySelectorAll('.demo-nav button').forEach(btn => {
